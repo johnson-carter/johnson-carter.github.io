@@ -8,20 +8,21 @@
 </head>
 <body>
 
-  <header class="topbar">
-    <h1 id="deckTitle">Flashcard Manager</h1>
-    <div class="file-actions">
-      <label class="btn" for="loadInput">Load JSON</label>
-      <input type="file" id="loadInput" accept="application/json" hidden>
-      <button class="btn" id="saveBtn">Save JSON</button>
-      <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
+  <nav class="tabs" aria-label="Main views">
+    <div class="tabs-inner">
+      <div class="tabs-brand" aria-label="Brand">
+        <div class="logo-placeholder" aria-hidden="true">QB</div>
+        <span class="logo-label">QuizBob</span>
+      </div>
+      <div class="tab-buttons">
+        <button class="tab-btn active" data-view="editor">Editor</button>
+        <button class="tab-btn" data-view="study">Study</button>
+        <button class="tab-btn" data-view="quiz">Quiz</button>
+      </div>
+      <div class="page-top">
+        <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
+      </div>
     </div>
-  </header>
-
-  <nav class="tabs">
-    <button class="tab-btn active" data-view="editor">Editor</button>
-    <button class="tab-btn" data-view="study">Study</button>
-    <button class="tab-btn" data-view="quiz">Quiz</button>
   </nav>
 
   <main class="view-container">
@@ -30,11 +31,14 @@
     <section id="view-editor" class="view active">
       <h2>Deck Creator</h2>
 
-      <form id="deckNameForm" class="inline-form">
-        <label for="deckNameInput">Deck name:</label>
-        <input type="text" id="deckNameInput" name="deckName" placeholder="My Deck">
-        <button type="submit" class="btn" style="color: orange">*Rename*</button>
-      </form>
+      <header class="topbar">
+        <input id="deckTitle" class="deck-title-input" type="text" value="Flashcard Manager" aria-label="Deck name" placeholder="Deck name" title="Click to edit deck name">
+        <div class="file-actions">
+          <label class="btn btn-top" for="loadInput">Load JSON</label>
+          <input type="file" id="loadInput" accept="application/json" hidden>
+          <button class="btn btn-top" id="saveBtn">Save JSON</button>
+        </div>
+      </header>
 
       <form id="addCardForm" class="add-card-form">
         <input type="text" name="question" placeholder="Question" required>

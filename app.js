@@ -208,6 +208,14 @@ const controller = new QuizController();
 
 /* ---------------- View switching ---------------- */
 
+const deckTitleInput = document.getElementById('deckTitle');
+if (deckTitleInput) {
+  deckTitleInput.addEventListener('change', () => {
+    controller.setDeckName(deckTitleInput.value);
+    updateUI();
+  });
+}
+
 function setActiveView(viewName) {
   controller.activeView = viewName;
 
@@ -222,7 +230,10 @@ function setActiveView(viewName) {
 }
 
 function updateUI() {
-  document.getElementById('deckTitle').textContent = controller.data.deckName || 'Flashcard Manager';
+  const deckTitleInput = document.getElementById('deckTitle');
+  if (deckTitleInput) {
+    deckTitleInput.value = controller.data.deckName || 'Flashcard Manager';
+  }
 
   if (controller.activeView === 'editor') renderEditor();
   if (controller.activeView === 'study') renderStudy();
@@ -437,16 +448,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => setActiveView(btn.dataset.view));
 });
 
-// --- Editor: rename deck ---
-document.getElementById('deckNameForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const name = formData.get('deckName').trim();
-  if (name) controller.setDeckName(name);
-  e.target.reset();
-  updateUI();
-});
-
 // --- Editor: add card ---
 document.getElementById('addCardForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -578,16 +579,16 @@ const THEME_LABELS = {
 
 function applyTheme(theme) {
   if (theme === 'light') {
-    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
   } else {
     document.documentElement.setAttribute('data-theme', theme);
   }
+
   document.getElementById('themeToggleBtn').textContent = THEME_LABELS[theme];
+
   try {
     localStorage.setItem('flashcard-theme', theme);
-  } catch (e) {
-    /* localStorage may be unavailable (e.g. private browsing); ignore */
-  }
+  } catch (e) {}
 }
 
 function initTheme() {
