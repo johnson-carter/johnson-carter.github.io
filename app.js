@@ -449,122 +449,161 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // --- Editor: add card ---
-document.getElementById('addCardForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const question = formData.get('question').trim();
-  const answer = formData.get('answer').trim();
-  if (!question || !answer) return;
-  controller.addCard(question, answer);
-  e.target.reset();
-  updateUI();
-});
+const addCardForm = document.getElementById('addCardForm');
+if (addCardForm) {
+  addCardForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const question = formData.get('question').trim();
+    const answer = formData.get('answer').trim();
+    if (!question || !answer) return;
+    controller.addCard(question, answer);
+    e.target.reset();
+    updateUI();
+  });
+}
 
 // --- Study: filter toggle (reactive) ---
-document.getElementById('filterStarredCheckbox').addEventListener('change', () => {
-  controller.toggleFilterStarred();
-  updateUI();
-});
+const filterStarredCheckbox = document.getElementById('filterStarredCheckbox');
+if (filterStarredCheckbox) {
+  filterStarredCheckbox.addEventListener('change', () => {
+    controller.toggleFilterStarred();
+    updateUI();
+  });
+}
 
 // --- Study: flip / star / next / prev ---
-document.getElementById('flashcard').addEventListener('click', () => {
-  controller.studyFlip();
-  updateUI();
-});
-document.getElementById('flipBtn').addEventListener('click', () => {
-  controller.studyFlip();
-  updateUI();
-});
-document.getElementById('starBtn').addEventListener('click', () => {
-  controller.toggleStarCurrentStudyCard();
-  updateUI();
-});
-document.getElementById('nextBtn').addEventListener('click', () => {
-  controller.studyNext();
-  updateUI();
-});
-document.getElementById('prevBtn').addEventListener('click', () => {
-  controller.studyPrev();
-  updateUI();
-});
+const flashcard = document.getElementById('flashcard');
+if (flashcard) {
+  flashcard.addEventListener('click', () => {
+    controller.studyFlip();
+    updateUI();
+  });
+}
+const flipBtn = document.getElementById('flipBtn');
+if (flipBtn) {
+  flipBtn.addEventListener('click', () => {
+    controller.studyFlip();
+    updateUI();
+  });
+}
+const starBtn = document.getElementById('starBtn');
+if (starBtn) {
+  starBtn.addEventListener('click', () => {
+    controller.toggleStarCurrentStudyCard();
+    updateUI();
+  });
+}
+const nextBtn = document.getElementById('nextBtn');
+if (nextBtn) {
+  nextBtn.addEventListener('click', () => {
+    controller.studyNext();
+    updateUI();
+  });
+}
+const prevBtn = document.getElementById('prevBtn');
+if (prevBtn) {
+  prevBtn.addEventListener('click', () => {
+    controller.studyPrev();
+    updateUI();
+  });
+}
 
 // --- Quiz: start / submit ---
-document.getElementById('startQuizBtn').addEventListener('click', () => {
-  controller.startQuiz();
-  updateUI();
-});
-
-document.getElementById('quizForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const answerInput = document.getElementById('quizAnswerInput');
-  const feedbackEl = document.getElementById('quizFeedback');
-
-  if (controller.quizQueue.length === 0 || controller.quizFinished) return;
-
-  const result = controller.submitQuizAnswer(answerInput.value);
-  if (!result) return;
-
-  if (result.isCorrect) {
-    feedbackEl.textContent = 'Correct!';
-    feedbackEl.className = 'feedback correct';
-  } else {
-    feedbackEl.textContent = `Incorrect. Correct answer: ${result.correctAnswer}`;
-    feedbackEl.className = 'feedback incorrect';
-  }
-
-  // brief delay so the user can read feedback before the next question renders
-  setTimeout(() => {
+const startQuizBtn = document.getElementById('startQuizBtn');
+if (startQuizBtn) {
+  startQuizBtn.addEventListener('click', () => {
+    controller.startQuiz();
     updateUI();
-  }, 900);
-});
+  });
+}
+
+const quizForm = document.getElementById('quizForm');
+if (quizForm) {
+  quizForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const answerInput = document.getElementById('quizAnswerInput');
+    const feedbackEl = document.getElementById('quizFeedback');
+
+    if (controller.quizQueue.length === 0 || controller.quizFinished) return;
+
+    const result = controller.submitQuizAnswer(answerInput.value);
+    if (!result) return;
+
+    if (result.isCorrect) {
+      feedbackEl.textContent = 'Correct!';
+      feedbackEl.className = 'feedback correct';
+    } else {
+      feedbackEl.textContent = `Incorrect. Correct answer: ${result.correctAnswer}`;
+      feedbackEl.className = 'feedback incorrect';
+    }
+
+    // brief delay so the user can read feedback before the next question renders
+    setTimeout(() => {
+      updateUI();
+    }, 900);
+  });
+}
 
 // --- Quiz: results screen actions ---
-document.getElementById('retryMissedBtn').addEventListener('click', () => {
-  controller.retryMissedQuestions();
-  updateUI();
-});
+const retryMissedBtn = document.getElementById('retryMissedBtn');
+if (retryMissedBtn) {
+  retryMissedBtn.addEventListener('click', () => {
+    controller.retryMissedQuestions();
+    updateUI();
+  });
+}
 
-document.getElementById('retryFullBtn').addEventListener('click', () => {
-  controller.startQuiz();
-  updateUI();
-});
+const retryFullBtn = document.getElementById('retryFullBtn');
+if (retryFullBtn) {
+  retryFullBtn.addEventListener('click', () => {
+    controller.startQuiz();
+    updateUI();
+  });
+}
 
 // --- File I/O: load ---
-document.getElementById('loadInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
+const loadInput = document.getElementById('loadInput');
+if (loadInput) {
+  loadInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = evt => {
-    try {
-      controller.loadData(evt.target.result);
-      setActiveView('editor');
-    } catch (err) {
-      alert('Failed to load deck: ' + err.message);
-    }
-  };
-  reader.onerror = () => alert('Failed to read file.');
-  reader.readAsText(file);
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        controller.loadData(evt.target.result);
+        setActiveView('editor');
+      } catch (err) {
+        alert('Failed to load deck: ' + err.message);
+      }
+    };
+    reader.onerror = () => alert('Failed to read file.');
+    reader.readAsText(file);
 
-  // reset input so the same file can be re-selected later if needed
-  e.target.value = '';
-});
+    // reset input so the same file can be re-selected later if needed
+    e.target.value = '';
+  });
+}
 
 // --- File I/O: save ---
-document.getElementById('saveBtn').addEventListener('click', () => {
-  const json = controller.serialize();
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+const saveBtn = document.getElementById('saveBtn');
+if (saveBtn) {
+  saveBtn.addEventListener('click', () => {
+    const json = controller.serialize();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
-  a.href = url;
-  const safeName = (controller.data.deckName || 'deck').replace(/[^a-z0-9_\- ]/gi, '').trim() || 'deck';
-  a.download = `${safeName}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = (controller.data.deckName || 'deck').replace(/[^a-z0-9_\- ]/gi, '').trim() || 'deck';
+    a.download = `${safeName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
 
 /* ---------------- Theme toggle ---------------- */
 
@@ -579,12 +618,15 @@ const THEME_LABELS = {
 
 function applyTheme(theme) {
   if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.removeAttribute('data-theme');
   } else {
     document.documentElement.setAttribute('data-theme', theme);
   }
 
-  document.getElementById('themeToggleBtn').textContent = THEME_LABELS[theme];
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = THEME_LABELS[theme];
+  }
 
   try {
     localStorage.setItem('flashcard-theme', theme);
@@ -601,11 +643,14 @@ function initTheme() {
   applyTheme(THEMES.includes(saved) ? saved : 'light');
 }
 
-document.getElementById('themeToggleBtn').addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const nextIndex = (THEMES.indexOf(current) + 1) % THEMES.length;
-  applyTheme(THEMES[nextIndex]);
-});
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const nextIndex = (THEMES.indexOf(current) + 1) % THEMES.length;
+    applyTheme(THEMES[nextIndex]);
+  });
+}
 
 initTheme();
 
