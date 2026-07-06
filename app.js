@@ -569,11 +569,11 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 
 const THEMES = ['light', 'dark', 'coffee', 'rose', 'midnight'];
 const THEME_LABELS = {
-  light: '🌙 Dark',
-  dark: '☀️ Light',
-  coffee: '☕ Coffee',
-  midnight: '🌊 Midnight Blue',
-  rose: '🌷 Flora'
+  light: '🌙',
+  dark: '☀️',
+  coffee: '☕',
+  midnight: '🌊',
+  rose: '🌷'
  };
 
 function applyTheme(theme) {
