@@ -226,6 +226,11 @@ function setActiveView(viewName) {
     section.classList.toggle('active', section.id === `view-${viewName}`);
   });
 
+  const navToggle = document.getElementById('navToggle');
+  if (navToggle) {
+    navToggle.checked = false;
+  }
+
   updateUI();
 }
 
@@ -624,9 +629,10 @@ function applyTheme(theme) {
   }
 
   const themeToggleBtn = document.getElementById('themeToggleBtn');
-  if (themeToggleBtn) {
-    themeToggleBtn.textContent = THEME_LABELS[theme];
-  }
+  const themeToggleBtnMobile = document.getElementById('themeToggleBtnMobile');
+  [themeToggleBtn, themeToggleBtnMobile].filter(Boolean).forEach(btn => {
+    btn.textContent = THEME_LABELS[theme];
+  });
 
   try {
     localStorage.setItem('flashcard-theme', theme);
@@ -644,13 +650,15 @@ function initTheme() {
 }
 
 const themeToggleBtn = document.getElementById('themeToggleBtn');
-if (themeToggleBtn) {
-  themeToggleBtn.addEventListener('click', () => {
+const themeToggleBtnMobile = document.getElementById('themeToggleBtnMobile');
+
+[themeToggleBtn, themeToggleBtnMobile].filter(Boolean).forEach(btn => {
+  btn.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const nextIndex = (THEMES.indexOf(current) + 1) % THEMES.length;
     applyTheme(THEMES[nextIndex]);
   });
-}
+});
 
 initTheme();
 

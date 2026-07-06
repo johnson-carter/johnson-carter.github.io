@@ -13,13 +13,35 @@
       <div class="tabs-brand" aria-label="Brand">
         <img src="./qb.png" alt="QuizBob logo"><span class="logo-label">QuizBob</span>
       </div>
-      <div class="tab-buttons">
-        <button class="tab-btn active" data-view="editor">Editor</button>
-        <button class="tab-btn" data-view="study">Study</button>
-        <button class="tab-btn" data-view="quiz">Quiz</button>
+
+      <input type="checkbox" id="navToggle" class="nav-toggle" hidden>
+      <label class="nav-toggle-label" for="navToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+
+      <div class="tab-actions">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-view="editor">Editor</button>
+          <button class="tab-btn" data-view="study">Study</button>
+          <button class="tab-btn" data-view="quiz">Quiz</button>
+        </div>
       </div>
+
       <div class="page-top">
         <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
+      </div>
+
+      <div class="mobile-nav" aria-label="Mobile navigation">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-view="editor">Editor</button>
+          <button class="tab-btn" data-view="study">Study</button>
+          <button class="tab-btn" data-view="quiz">Quiz</button>
+        </div>
+        <div class="page-top mobile-page-top">
+          <button class="btn theme-btn" id="themeToggleBtnMobile" title="Cycle theme">🌓 Theme</button>
+        </div>
       </div>
     </div>
   </nav>
@@ -45,19 +67,21 @@
         <button type="submit" class="btn btn-primary">Add Card</button>
       </form>
 
-      <table class="card-table">
-        <thead>
-          <tr>
-            <th>Question</th>
-            <th>Answer</th>
-            <th>Starred</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="editorTableBody">
-          <!-- rows injected by JS -->
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="card-table">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Starred</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="editorTableBody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- STUDY VIEW -->

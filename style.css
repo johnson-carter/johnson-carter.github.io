@@ -93,6 +93,7 @@ html[data-theme="midnight"] {
 
 html, body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -105,10 +106,15 @@ body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 .page-top {
   display: flex;
   justify-content: flex-end;
-  padding: 16px 32px 10px;
+  padding: 0;
 }
 
 .topbar {
@@ -133,7 +139,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px 12px;
-  min-width: 240px;
+  min-width: min(240px, 100%);
   max-width: min(360px, 100%);
   cursor: text;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -164,9 +170,12 @@ body {
 }
 
 .tabs {
-  padding: 0 32px 0;
+  padding: 0 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .tabs-inner {
@@ -174,8 +183,10 @@ body {
   margin: 0 auto;
   min-height: 72px;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 1rem;
+  position: relative;
 }
 
 .tabs-brand {
@@ -215,12 +226,19 @@ body {
   font-size: 0.95rem;
 }
 
+.tab-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
 .tab-buttons {
   display: flex;
-  gap: 6px;
+  gap: 0.35rem;
   align-items: center;
-  justify-self: center;
-  align-self: end;
+  justify-content: center;
+  flex-wrap: wrap;
   padding-bottom: 0;
 }
 
@@ -228,18 +246,24 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  justify-self: end;
-  align-self: center;
+  flex-shrink: 0;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--border);
+}
+
+.mobile-nav {
+  display: none;
 }
 
 .tab-btn {
   border: none;
   background: transparent;
-  padding: 8px 24px 6px;
-  font-size: 1.25rem;
+  padding: 0.5rem 1.1rem 0.4rem;
+  font-size: 1.15rem;
   cursor: pointer;
   color: var(--muted);
   border-bottom: 4px solid transparent;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -255,7 +279,8 @@ body {
 .view-container {
   max-width: 960px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 1.5rem;
+  width: min(100%, 960px);
 }
 
 .view {
@@ -296,6 +321,10 @@ body {
   background: var(--surface);
   color: var(--text);
   border-color: var(--accent-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .btn-top:hover{
@@ -363,8 +392,15 @@ body {
   color: var(--text);
 }
 
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .card-table {
   width: 100%;
+  min-width: 560px;
   border-collapse: collapse;
   background: var(--surface);
   border-radius: var(--radius);
@@ -451,9 +487,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
   text-align: center;
-  font-size: 1.5rem;
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -494,7 +530,7 @@ body {
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: 16px;
-  padding: 32px;
+  padding: clamp(1.25rem, 4vw, 2rem);
 }
 
 .feedback {
@@ -576,6 +612,34 @@ body {
 }
 
 
+.nav-toggle-label {
+  display: none;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.nav-toggle-label span {
+  display: block;
+  width: 1.5rem;
+  height: 2px;
+  background: var(--text);
+  border-radius: 999px;
+}
+
+.nav-toggle:checked + .nav-toggle-label span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle:checked + .nav-toggle-label span:first-child {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-toggle:checked + .nav-toggle-label span:last-child {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
 /* "Surface" adjustment*/
 .btn,
 .flashcard,
@@ -588,4 +652,140 @@ html[data-theme="midnight"] .btn,
 html[data-theme="midnight"] .flashcard,
 html[data-theme="midnight"] #quizArea {
   box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+@media (max-width: 1024px) {
+  .tabs {
+    padding: 0 1rem;
+  }
+
+  .view-container {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+
+  .tabs-inner {
+    min-height: 64px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .nav-toggle-label {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .tab-actions {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.4rem);
+    width: min(18rem, calc(100vw - 1.5rem));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    z-index: 30;
+  }
+
+  .nav-toggle:checked ~ .mobile-nav {
+    display: flex;
+  }
+
+  .mobile-nav .tab-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    justify-content: flex-start;
+  }
+
+  .mobile-nav .page-top {
+    justify-content: flex-start;
+    padding-top: 0.25rem;
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .tab-btn {
+    padding: 0.75rem 0.9rem;
+    border-bottom: none;
+    border-left: 3px solid transparent;
+    font-size: 1rem;
+  }
+
+  .tab-btn.active {
+    border-left-color: var(--accent);
+    border-bottom-color: transparent;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .page-top {
+    justify-content: flex-start;
+    padding-top: 0.25rem;
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .view-container {
+    padding: 1rem;
+  }
+
+  .topbar,
+  .study-controls,
+  .quiz-controls,
+  .inline-form,
+  .add-card-form,
+  .study-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .deck-title-input,
+  .inline-form input[type="text"],
+  .add-card-form input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .file-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .file-actions .btn,
+  .study-actions .btn,
+  .inline-form .btn,
+  .add-card-form .btn {
+    width: 100%;
+  }
+
+  .file-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .study-actions .btn {
+    min-width: 0;
+  }
+
+  .flashcard,
+  #quizArea {
+    min-height: 220px;
+  }
 }
