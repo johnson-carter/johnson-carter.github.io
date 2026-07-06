@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizBob  -  Local Flashcard Manager</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h1 id="deckTitle">Flashcard Manager</h1>
+    <div class="file-actions">
+      <label class="btn" for="loadInput">Load JSON</label>
+      <input type="file" id="loadInput" accept="application/json" hidden>
+      <button class="btn" id="saveBtn">Save JSON</button>
+      <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="editor">Editor</button>
+    <button class="tab-btn" data-view="study">Study</button>
+    <button class="tab-btn" data-view="quiz">Quiz</button>
+  </nav>
+
+  <main class="view-container">
+
+    <!-- EDITOR VIEW -->
+    <section id="view-editor" class="view active">
+      <h2>Deck Creator</h2>
+
+      <form id="deckNameForm" class="inline-form">
+        <label for="deckNameInput">Deck name:</label>
+        <input type="text" id="deckNameInput" name="deckName" placeholder="My Deck">
+        <button type="submit" class="btn" style="color: orange">*Rename*</button>
+      </form>
+
+      <form id="addCardForm" class="add-card-form">
+        <input type="text" name="question" placeholder="Question" required>
+        <input type="text" name="answer" placeholder="Answer" required>
+        <button type="submit" class="btn btn-primary">Add Card</button>
+      </form>
+
+      <table class="card-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Answer</th>
+            <th>Starred</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="editorTableBody">
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- STUDY VIEW -->
+    <section id="view-study" class="view">
+      <h2>Study Mode</h2>
+
+      <div class="study-controls">
+        <label class="filter-toggle">
+          <input type="checkbox" id="filterStarredCheckbox">
+          Filter by Starred Only
+        </label>
+        <span id="studyProgress" class="progress-label"></span>
+      </div>
+
+      <div id="studyCardArea" class="card-area">
+        <div class="flashcard" id="flashcard">
+          <div class="flashcard-face" id="flashcardFace">No cards to study</div>
+        </div>
+      </div>
+
+      <div class="study-actions">
+        <button class="btn" id="prevBtn">&larr; Prev</button>
+        <button class="btn" id="flipBtn">Flip</button>
+        <button class="btn" id="starBtn">&#9734; Star</button>
+        <button class="btn" id="nextBtn">Next &rarr;</button>
+      </div>
+    </section>
+
+    <!-- QUIZ VIEW -->
+    <section id="view-quiz" class="view">
+      <h2>Quiz Mode</h2>
+
+      <div class="quiz-controls">
+        <button class="btn btn-primary" id="startQuizBtn">Start / Restart Quiz</button>
+        <span id="quizProgress" class="progress-label"></span>
+      </div>
+
+      <div id="quizArea" class="card-area">
+        <p id="quizQuestion">Press "Start / Restart Quiz" to begin.</p>
+      </div>
+
+      <form id="quizForm" class="inline-form">
+        <input type="text" id="quizAnswerInput" placeholder="Your answer" autocomplete="off">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+
+      <div id="quizFeedback" class="feedback"></div>
+      <div id="quizScore" class="progress-label"></div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
