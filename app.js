@@ -26,6 +26,7 @@ class QuizController {
     this.quizIndex = 0;
     this.quizScore = 0;
     this.quizFinished = false;
+    this.quizResults = []; // [{ cardId, question, userAnswer, correctAnswer, isCorrect }]
 
     // active view name
     this.activeView = 'editor';
@@ -111,6 +112,7 @@ class QuizController {
     this.quizQueue = shuffled;
     this.quizIndex = 0;
     this.quizScore = 0;
+    this.quizResults = [];
     this.quizFinished = this.quizQueue.length === 0;
   }
 
@@ -126,10 +128,39 @@ class QuizController {
     const isCorrect = normalize(userAnswer) === normalize(card.answer);
     if (isCorrect) this.quizScore++;
 
+    this.quizResults.push({
+      cardId: card.id,
+      question: card.question,
+      userAnswer: userAnswer.trim(),
+      correctAnswer: card.answer,
+      isCorrect
+    });
+
     this.quizIndex++;
     if (this.quizIndex >= this.quizQueue.length) this.quizFinished = true;
 
     return { isCorrect, correctAnswer: card.answer };
+  }
+
+  // Build a fresh quiz queue containing only the questions missed last run
+  retryMissedQuestions() {
+    const missedIds = this.quizResults
+      .filter(r => !r.isCorrect)
+      .map(r => r.cardId);
+
+    const missedCards = this.data.cards.filter(c => missedIds.includes(c.id));
+
+    // shuffle the missed subset
+    for (let i = missedCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [missedCards[i], missedCards[j]] = [missedCards[j], missedCards[i]];
+    }
+
+    this.quizQueue = missedCards;
+    this.quizIndex = 0;
+    this.quizScore = 0;
+    this.quizResults = [];
+    this.quizFinished = this.quizQueue.length === 0;
   }
 
   /* ---------------- File I/O ---------------- */
@@ -158,6 +189,7 @@ class QuizController {
     this.quizIndex = 0;
     this.quizScore = 0;
     this.quizFinished = false;
+    this.quizResults = [];
   }
 
   serialize() {
@@ -305,9 +337,18 @@ function renderQuiz() {
   const scoreEl = document.getElementById('quizScore');
   const feedbackEl = document.getElementById('quizFeedback');
   const answerInput = document.getElementById('quizAnswerInput');
+  const quizForm = document.getElementById('quizForm');
+  const resultsArea = document.getElementById('quizResultsArea');
+  const finishActions = document.getElementById('quizFinishActions');
+  const retryMissedBtn = document.getElementById('retryMissedBtn');
 
   feedbackEl.textContent = '';
   feedbackEl.className = 'feedback';
+
+  // default state: hide results/retry UI, show the active-quiz form
+  resultsArea.style.display = 'none';
+  finishActions.style.display = 'none';
+  quizForm.style.display = '';
 
   if (controller.quizQueue.length === 0) {
     questionEl.textContent = 'Press "Start / Restart Quiz" to begin.';
@@ -324,6 +365,18 @@ function renderQuiz() {
     scoreEl.textContent = '';
     answerInput.value = '';
     answerInput.disabled = true;
+    quizForm.style.display = 'none';
+
+    renderQuizResultsList();
+    resultsArea.style.display = '';
+    finishActions.style.display = '';
+
+    const missedCount = controller.quizResults.filter(r => !r.isCorrect).length;
+    retryMissedBtn.disabled = missedCount === 0;
+    retryMissedBtn.textContent = missedCount === 0
+      ? 'No missed questions'
+      : `Retry Missed Questions (${missedCount})`;
+
     return;
   }
 
@@ -334,6 +387,46 @@ function renderQuiz() {
   answerInput.disabled = false;
   answerInput.value = '';
   answerInput.focus();
+}
+
+function renderQuizResultsList() {
+  const resultsArea = document.getElementById('quizResultsArea');
+  resultsArea.innerHTML = '';
+
+  const heading = document.createElement('h3');
+  heading.className = 'quiz-results-heading';
+  heading.textContent = 'Review Answers';
+  resultsArea.appendChild(heading);
+
+  const list = document.createElement('ul');
+  list.className = 'quiz-results-list';
+
+  controller.quizResults.forEach(r => {
+    const li = document.createElement('li');
+    li.className = `quiz-result-row ${r.isCorrect ? 'correct-row' : 'incorrect-row'}`;
+
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-result-question';
+    qDiv.textContent = `${r.isCorrect ? '\u2714' : '\u2718'} ${r.question}`;
+
+    const yourDiv = document.createElement('div');
+    yourDiv.className = 'quiz-result-your-answer';
+    yourDiv.textContent = `Your answer: ${r.userAnswer || '(blank)'}`;
+
+    li.appendChild(qDiv);
+    li.appendChild(yourDiv);
+
+    if (!r.isCorrect) {
+      const correctDiv = document.createElement('div');
+      correctDiv.className = 'quiz-result-correct-answer';
+      correctDiv.textContent = `Correct answer: ${r.correctAnswer}`;
+      li.appendChild(correctDiv);
+    }
+
+    list.appendChild(li);
+  });
+
+  resultsArea.appendChild(list);
 }
 
 /* ============================================================
@@ -422,6 +515,17 @@ document.getElementById('quizForm').addEventListener('submit', e => {
   setTimeout(() => {
     updateUI();
   }, 900);
+});
+
+// --- Quiz: results screen actions ---
+document.getElementById('retryMissedBtn').addEventListener('click', () => {
+  controller.retryMissedQuestions();
+  updateUI();
+});
+
+document.getElementById('retryFullBtn').addEventListener('click', () => {
+  controller.startQuiz();
+  updateUI();
 });
 
 // --- File I/O: load ---

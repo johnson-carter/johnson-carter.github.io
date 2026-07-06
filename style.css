@@ -388,3 +388,64 @@ body {
   margin-top: 6px;
   font-size: 1.1rem;
 }
+
+/* ---------------- Quiz results view ---------------- */
+
+.quiz-results {
+  margin-top: 28px;
+}
+
+.quiz-results-heading {
+  font-size: 1.2rem;
+  margin: 0 0 14px;
+}
+
+.quiz-results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-result-row {
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-left: 4px solid transparent;
+  background: var(--panel);
+}
+
+.quiz-result-row.correct-row {
+  border-left-color: var(--correct);
+}
+
+.quiz-result-row.incorrect-row {
+  border-left-color: var(--danger);
+}
+
+.quiz-result-question {
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 6px;
+}
+
+.quiz-result-row.correct-row .quiz-result-question {
+  color: var(--correct);
+}
+
+.quiz-result-row.incorrect-row .quiz-result-question {
+  color: var(--danger);
+}
+
+.quiz-result-your-answer,
+.quiz-result-correct-answer {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.quiz-result-correct-answer {
+  color: var(--danger);
+  margin-top: 2px;
+}
