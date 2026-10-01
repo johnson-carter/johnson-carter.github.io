@@ -4,24 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuizBob  -  Local Flashcard Manager</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <header class="topbar">
-    <h1 id="deckTitle">Flashcard Manager</h1>
-    <div class="file-actions">
-      <label class="btn" for="loadInput">Load JSON</label>
-      <input type="file" id="loadInput" accept="application/json" hidden>
-      <button class="btn" id="saveBtn">Save JSON</button>
-      <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
-    </div>
-  </header>
+  <nav class="tabs" aria-label="Main views">
+    <div class="tabs-inner">
+      <div class="tabs-brand" aria-label="Brand">
+        <img src="./qb.png" alt="QuizBob logo"><span class="logo-label">Quiz-Bob</span>
+      </div>
 
-  <nav class="tabs">
-    <button class="tab-btn active" data-view="editor">Editor</button>
-    <button class="tab-btn" data-view="study">Study</button>
-    <button class="tab-btn" data-view="quiz">Quiz</button>
+      <input type="checkbox" id="navToggle" class="nav-toggle" hidden>
+      <label class="nav-toggle-label" for="navToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+
+      <div class="tab-actions">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-view="editor">Editor</button>
+          <button class="tab-btn" data-view="study">Study</button>
+          <button class="tab-btn" data-view="quiz">Quiz</button>
+        </div>
+      </div>
+
+      <div class="page-top">
+        <button class="btn theme-btn" id="themeToggleBtn" title="Cycle theme">🌓 Theme</button>
+      </div>
+
+      <div class="mobile-nav" aria-label="Mobile navigation">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-view="editor">Editor</button>
+          <button class="tab-btn" data-view="study">Study</button>
+          <button class="tab-btn" data-view="quiz">Quiz</button>
+        </div>
+        <div class="page-top mobile-page-top">
+          <button class="btn theme-btn" id="themeToggleBtnMobile" title="Cycle theme">🌓 Theme</button>
+        </div>
+      </div>
+    </div>
   </nav>
 
   <main class="view-container">
@@ -30,11 +52,14 @@
     <section id="view-editor" class="view active">
       <h2>Deck Creator</h2>
 
-      <form id="deckNameForm" class="inline-form">
-        <label for="deckNameInput">Deck name:</label>
-        <input type="text" id="deckNameInput" name="deckName" placeholder="My Deck">
-        <button type="submit" class="btn" style="color: orange">*Rename*</button>
-      </form>
+      <header class="topbar">
+        <input id="deckTitle" class="deck-title-input" type="text" value="Flashcard Manager" aria-label="Deck name" placeholder="Deck name" title="Click to edit deck name">
+        <div class="file-actions">
+          <label class="btn btn-top" for="loadInput">Load JSON</label>
+          <input type="file" id="loadInput" accept="application/json" hidden>
+          <button class="btn btn-top" id="saveBtn">Save JSON</button>
+        </div>
+      </header>
 
       <form id="addCardForm" class="add-card-form">
         <input type="text" name="question" placeholder="Question" required>
@@ -42,19 +67,21 @@
         <button type="submit" class="btn btn-primary">Add Card</button>
       </form>
 
-      <table class="card-table">
-        <thead>
-          <tr>
-            <th>Question</th>
-            <th>Answer</th>
-            <th>Starred</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="editorTableBody">
-          <!-- rows injected by JS -->
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="card-table">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Starred</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="editorTableBody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- STUDY VIEW -->
@@ -149,6 +176,6 @@
 
   </main>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
