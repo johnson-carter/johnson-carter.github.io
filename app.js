@@ -7,6 +7,19 @@
    mutate state. Nothing outside this class touches `this.data`
    directly except through its methods.
    ============================================================ */
+/* Fisher-Yates shuffle, in place; returns the same array so calls can chain. */
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* Learn mode tuning knobs */
+const LEARN_CHOICE_COUNT = 4; // 1 correct answer + 3 distractors
+const LEARN_FR_TARGET = 2;    // correct written answers needed to master a card
+
 class QuizController {
   constructor() {
     this.data = {
@@ -20,6 +33,19 @@ class QuizController {
     this.filterStarred = false;
     this.studyIndex = 0;
     this.isFlipped = false;
+    this.studyMode = 'flashcards'; // 'flashcards' | 'learn'
+
+    // Learn mode state (multiple choice -> written, inside the Study tab)
+    this.learnQueue = [];      // [{ cardId, stage: 'mcq' | 'fr', frCorrect }]
+    this.learnChoices = null;  // answer strings for the current MCQ prompt
+    this.learnPromptKey = null; // '<cardId>:<stage>' the prompt was built for
+    this.learnFeedback = null; // frozen snapshot of the answer just submitted
+    this.learnTotal = 0;
+    this.learnMastered = 0;
+    this.learnAsked = 0;
+    this.learnCorrect = 0;
+    this.learnStarted = false;
+    this.learnFinished = false;
 
     // Quiz mode state
     this.quizQueue = [];
@@ -57,6 +83,10 @@ class QuizController {
     if (card) card[field] = value;
   }
 
+  getCardById(id) {
+    return this.data.cards.find(c => c.id === id) || null;
+  }
+
   toggleStarById(id) {
     const card = this.data.cards.find(c => c.id === id);
     if (card) card.starred = !card.starred;
@@ -73,6 +103,13 @@ class QuizController {
   toggleFilterStarred() {
     this.filterStarred = !this.filterStarred;
     this.studyIndex = 0;
+    this.isFlipped = false;
+    // the learn deck is built from the filtered set, so it no longer applies
+    this.resetLearnSession();
+  }
+
+  setStudyMode(mode) {
+    this.studyMode = mode;
     this.isFlipped = false;
   }
 
@@ -100,16 +137,166 @@ class QuizController {
     if (card) this.toggleStarById(card.id);
   }
 
+  /* ---------------- Learn mode helpers ----------------
+     Every card enters the deck as a multiple-choice question. Answering a
+     card correctly promotes it to a written (free response) question and
+     drops it back into the deck at a random spot; a written answer has to
+     land correctly LEARN_FR_TARGET times before the card is mastered and
+     leaves the deck. Any miss sends the card back as multiple choice.
+     ------------------------------------------------------------------- */
+
+  startLearnSession() {
+    const cards = this.getStudyCards();
+    this.learnQueue = shuffleInPlace(
+      cards.map(c => ({ cardId: c.id, stage: 'mcq', frCorrect: 0 }))
+    );
+    this.learnTotal = this.learnQueue.length;
+    this.learnMastered = 0;
+    this.learnAsked = 0;
+    this.learnCorrect = 0;
+    this.learnFeedback = null;
+    this.learnStarted = this.learnTotal > 0;
+    this.learnFinished = false;
+    this.prepareLearnPrompt();
+  }
+
+  resetLearnSession() {
+    this.learnQueue = [];
+    this.learnChoices = null;
+    this.learnPromptKey = null;
+    this.learnFeedback = null;
+    this.learnTotal = 0;
+    this.learnMastered = 0;
+    this.learnAsked = 0;
+    this.learnCorrect = 0;
+    this.learnStarted = false;
+    this.learnFinished = false;
+  }
+
+  getCurrentLearnItem() {
+    // drop queued items whose card was deleted in the Editor mid-session
+    while (this.learnQueue.length && !this.getCardById(this.learnQueue[0].cardId)) {
+      this.learnQueue.shift();
+      this.learnTotal = Math.max(this.learnMastered, this.learnTotal - 1);
+    }
+    return this.learnQueue[0] || null;
+  }
+
+  prepareLearnPrompt() {
+    const item = this.getCurrentLearnItem();
+    if (!item) {
+      this.learnChoices = null;
+      this.learnPromptKey = null;
+      if (this.learnStarted) this.learnFinished = true;
+      return;
+    }
+    this.learnChoices = item.stage === 'mcq' ? this.buildLearnChoices(item.cardId) : null;
+    this.learnPromptKey = `${item.cardId}:${item.stage}`;
+  }
+
+  // True when the cached prompt no longer matches the head of the queue,
+  // e.g. the card was deleted in the Editor mid-session.
+  isLearnPromptStale() {
+    const item = this.getCurrentLearnItem();
+    return !item || this.learnPromptKey !== `${item.cardId}:${item.stage}`;
+  }
+
+  // Correct answer plus up to LEARN_CHOICE_COUNT - 1 distinct distractors
+  buildLearnChoices(cardId) {
+    const card = this.getCardById(cardId);
+    if (!card) return null;
+
+    const normalize = s => s.trim().toLowerCase();
+    const seen = new Set([normalize(card.answer)]);
+    const pool = [];
+
+    const collect = cards => cards.forEach(c => {
+      const text = (c.answer || '').trim();
+      if (c.id === cardId || !text || seen.has(normalize(text))) return;
+      seen.add(normalize(text));
+      pool.push(text);
+    });
+
+    collect(this.getStudyCards());
+    // a small starred-only deck may not hold enough distractors on its own
+    if (pool.length < LEARN_CHOICE_COUNT - 1) collect(this.data.cards);
+
+    shuffleInPlace(pool);
+    return shuffleInPlace([card.answer, ...pool.slice(0, LEARN_CHOICE_COUNT - 1)]);
+  }
+
+  // Put a card back somewhere random, but never as the very next prompt
+  requeueLearnItem(item) {
+    const earliest = Math.min(2, this.learnQueue.length);
+    const span = this.learnQueue.length - earliest + 1;
+    this.learnQueue.splice(earliest + Math.floor(Math.random() * span), 0, item);
+  }
+
+  submitLearnAnswer(userAnswer) {
+    if (this.learnFeedback) return null; // feedback is on screen; ignore extra input
+    const item = this.getCurrentLearnItem();
+    if (!item) return null;
+    const card = this.getCardById(item.cardId);
+    if (!card) return null;
+
+    const normalize = s => (s || '').trim().toLowerCase();
+    const isCorrect = normalize(userAnswer) === normalize(card.answer);
+    const stage = item.stage;
+    const choices = this.learnChoices;
+
+    this.learnAsked++;
+    if (isCorrect) this.learnCorrect++;
+
+    this.learnQueue.shift();
+
+    let mastered = false;
+    if (stage === 'mcq') {
+      if (isCorrect) item.stage = 'fr'; // promote: same card, now written
+      this.requeueLearnItem(item);
+    } else if (isCorrect) {
+      item.frCorrect++;
+      if (item.frCorrect >= LEARN_FR_TARGET) {
+        mastered = true;
+        this.learnMastered++;
+      } else {
+        this.requeueLearnItem(item);
+      }
+    } else {
+      item.stage = 'mcq'; // demote back to multiple choice
+      item.frCorrect = 0;
+      this.requeueLearnItem(item);
+    }
+
+    // freeze what was asked so the feedback screen keeps showing it
+    this.learnFeedback = {
+      stage,
+      choices,
+      question: card.question,
+      correctAnswer: card.answer,
+      userAnswer: (userAnswer || '').trim(),
+      isCorrect,
+      mastered,
+      frCorrect: item.frCorrect
+    };
+    return this.learnFeedback;
+  }
+
+  advanceLearn() {
+    if (!this.learnFeedback) return;
+    this.learnFeedback = null;
+    this.prepareLearnPrompt();
+  }
+
+  getLearnAccuracy() {
+    return this.learnAsked === 0
+      ? 0
+      : Math.round((this.learnCorrect / this.learnAsked) * 100);
+  }
+
   /* ---------------- Quiz mode helpers ---------------- */
 
   startQuiz() {
-    // shuffle a copy of the cards (Fisher-Yates)
-    const shuffled = [...this.data.cards];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    this.quizQueue = shuffled;
+    this.quizQueue = shuffleInPlace([...this.data.cards]);
     this.quizIndex = 0;
     this.quizScore = 0;
     this.quizResults = [];
@@ -150,13 +337,7 @@ class QuizController {
 
     const missedCards = this.data.cards.filter(c => missedIds.includes(c.id));
 
-    // shuffle the missed subset
-    for (let i = missedCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [missedCards[i], missedCards[j]] = [missedCards[j], missedCards[i]];
-    }
-
-    this.quizQueue = missedCards;
+    this.quizQueue = shuffleInPlace(missedCards);
     this.quizIndex = 0;
     this.quizScore = 0;
     this.quizResults = [];
@@ -190,6 +371,8 @@ class QuizController {
     this.quizScore = 0;
     this.quizFinished = false;
     this.quizResults = [];
+    this.studyMode = 'flashcards';
+    this.resetLearnSession();
   }
 
   serialize() {
@@ -300,6 +483,18 @@ function renderStudy() {
   const filterCheckbox = document.getElementById('filterStarredCheckbox');
   filterCheckbox.checked = controller.filterStarred;
 
+  const isLearn = controller.studyMode === 'learn';
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === controller.studyMode);
+  });
+  document.getElementById('studyFlashcardsPane').style.display = isLearn ? 'none' : '';
+  document.getElementById('studyLearnPane').style.display = isLearn ? '' : 'none';
+
+  if (isLearn) renderLearn();
+  else renderFlashcards();
+}
+
+function renderFlashcards() {
   const cards = controller.getStudyCards();
   const progressLabel = document.getElementById('studyProgress');
   const flashcardEl = document.getElementById('flashcard');
@@ -327,6 +522,131 @@ function renderStudy() {
   starBtn.disabled = false;
   starBtn.textContent = card.starred ? '\u2605 Starred' : '\u2606 Star';
   starBtn.classList.toggle('starred-btn', card.starred);
+}
+
+/* ---------------- Learn sub-mode (multiple choice -> written) ---------------- */
+
+function renderLearn() {
+  const questionEl = document.getElementById('learnQuestion');
+  const choicesEl = document.getElementById('learnChoices');
+  const formEl = document.getElementById('learnForm');
+  const inputEl = document.getElementById('learnAnswerInput');
+  const feedbackEl = document.getElementById('learnFeedback');
+  const continueBtn = document.getElementById('learnContinueBtn');
+  const badgeEl = document.getElementById('learnStageBadge');
+  const progressEl = document.getElementById('studyProgress');
+
+  // reset the parts that are rebuilt from scratch every render
+  choicesEl.innerHTML = '';
+  feedbackEl.textContent = '';
+  feedbackEl.className = 'feedback';
+  formEl.style.display = 'none';
+  continueBtn.style.display = 'none';
+  badgeEl.textContent = '';
+  badgeEl.className = 'stage-badge';
+
+  if (!controller.learnStarted) {
+    const cards = controller.getStudyCards();
+    questionEl.textContent = cards.length === 0
+      ? (controller.filterStarred
+          ? 'No starred cards yet.'
+          : 'No cards to learn — add some in the Editor.')
+      : 'Press "Start / Restart Learn" to begin.';
+    progressEl.textContent = '';
+    return;
+  }
+
+  // the deck can shift under us if cards are deleted while a session runs
+  if (!controller.learnFeedback && controller.isLearnPromptStale()) {
+    controller.prepareLearnPrompt();
+  }
+
+  progressEl.textContent = `Mastered ${controller.learnMastered} of ${controller.learnTotal} · `
+    + `${controller.learnQueue.length} in deck · Accuracy ${controller.getLearnAccuracy()}%`;
+
+  if (controller.learnFinished) {
+    questionEl.textContent = `Session complete! You mastered all ${controller.learnTotal} card(s).`;
+    feedbackEl.textContent = `${controller.learnCorrect} of ${controller.learnAsked} answers correct `
+      + `(${controller.getLearnAccuracy()}%).`;
+    feedbackEl.className = 'feedback correct';
+    return;
+  }
+
+  const fb = controller.learnFeedback;
+  const stage = fb ? fb.stage : controller.getCurrentLearnItem().stage;
+
+  badgeEl.textContent = stage === 'mcq' ? 'Multiple Choice' : 'Written Answer';
+  badgeEl.classList.add(stage === 'mcq' ? 'stage-mcq' : 'stage-fr');
+
+  if (fb) {
+    questionEl.textContent = fb.question;
+    if (fb.stage === 'mcq') renderLearnChoices(choicesEl, fb.choices, fb);
+    renderLearnFeedback(feedbackEl, fb);
+    continueBtn.style.display = '';
+    continueBtn.focus();
+    return;
+  }
+
+  const item = controller.getCurrentLearnItem();
+  const card = controller.getCardById(item.cardId);
+  questionEl.textContent = card.question;
+
+  if (stage === 'mcq') {
+    renderLearnChoices(choicesEl, controller.learnChoices, null);
+  } else {
+    formEl.style.display = '';
+    inputEl.disabled = false;
+    inputEl.value = '';
+    inputEl.focus();
+  }
+}
+
+function renderLearnChoices(container, choices, feedback) {
+  if (!choices) return;
+
+  const normalize = s => (s || '').trim().toLowerCase();
+
+  choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'choice-btn';
+
+    const key = document.createElement('span');
+    key.className = 'choice-key';
+    key.textContent = i + 1;
+    const text = document.createElement('span');
+    text.textContent = choice;
+    btn.append(key, text);
+
+    if (feedback) {
+      btn.disabled = true;
+      if (normalize(choice) === normalize(feedback.correctAnswer)) {
+        btn.classList.add('choice-correct');
+      } else if (normalize(choice) === normalize(feedback.userAnswer)) {
+        btn.classList.add('choice-wrong');
+      }
+    } else {
+      btn.addEventListener('click', () => submitLearnAnswer(choice));
+    }
+
+    container.appendChild(btn);
+  });
+}
+
+function renderLearnFeedback(feedbackEl, fb) {
+  if (fb.isCorrect) {
+    feedbackEl.className = 'feedback correct';
+    if (fb.mastered) {
+      feedbackEl.textContent = 'Correct — card mastered!';
+    } else if (fb.stage === 'mcq') {
+      feedbackEl.textContent = 'Correct! This one comes back as a written question.';
+    } else {
+      feedbackEl.textContent = `Correct! ${LEARN_FR_TARGET - fb.frCorrect} more written answer(s) to master it.`;
+    }
+  } else {
+    feedbackEl.className = 'feedback incorrect';
+    feedbackEl.textContent = `Incorrect. Correct answer: ${fb.correctAnswer}`;
+  }
 }
 
 /* ---------------- Quiz view ---------------- */
@@ -434,7 +754,10 @@ function renderQuizResultsList() {
    ============================================================ */
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => setActiveView(btn.dataset.view));
+  btn.addEventListener('click', () => {
+    cancelLearnAdvance();
+    setActiveView(btn.dataset.view);
+  });
 });
 
 // --- Editor: rename deck ---
@@ -461,6 +784,7 @@ document.getElementById('addCardForm').addEventListener('submit', e => {
 
 // --- Study: filter toggle (reactive) ---
 document.getElementById('filterStarredCheckbox').addEventListener('change', () => {
+  cancelLearnAdvance();
   controller.toggleFilterStarred();
   updateUI();
 });
@@ -485,6 +809,67 @@ document.getElementById('nextBtn').addEventListener('click', () => {
 document.getElementById('prevBtn').addEventListener('click', () => {
   controller.studyPrev();
   updateUI();
+});
+
+// --- Study: flashcards / learn sub-mode switch ---
+document.querySelectorAll('#studyModeSwitch .mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    cancelLearnAdvance();
+    controller.setStudyMode(btn.dataset.mode);
+    updateUI();
+  });
+});
+
+/* --- Study: learn mode ---
+   A correct answer auto-advances after a beat; a miss waits on Continue so
+   the correct answer stays readable. */
+
+const LEARN_ADVANCE_DELAY = 850;
+let learnAdvanceTimer = null;
+
+function cancelLearnAdvance() {
+  clearTimeout(learnAdvanceTimer);
+  learnAdvanceTimer = null;
+}
+
+function advanceLearn() {
+  cancelLearnAdvance();
+  controller.advanceLearn();
+  updateUI();
+}
+
+function submitLearnAnswer(answer) {
+  const result = controller.submitLearnAnswer(answer);
+  if (!result) return;
+  updateUI();
+  if (result.isCorrect) {
+    learnAdvanceTimer = setTimeout(advanceLearn, LEARN_ADVANCE_DELAY);
+  }
+}
+
+document.getElementById('startLearnBtn').addEventListener('click', () => {
+  cancelLearnAdvance();
+  controller.startLearnSession();
+  updateUI();
+});
+
+document.getElementById('learnForm').addEventListener('submit', e => {
+  e.preventDefault();
+  submitLearnAnswer(document.getElementById('learnAnswerInput').value);
+});
+
+document.getElementById('learnContinueBtn').addEventListener('click', advanceLearn);
+
+// number keys pick a multiple-choice answer
+document.addEventListener('keydown', e => {
+  if (controller.activeView !== 'study' || controller.studyMode !== 'learn') return;
+  if (controller.learnFeedback || !controller.learnChoices) return;
+  if (e.target.tagName === 'INPUT' || e.ctrlKey || e.altKey || e.metaKey) return;
+
+  const pick = Number(e.key);
+  if (!Number.isInteger(pick) || pick < 1 || pick > controller.learnChoices.length) return;
+  e.preventDefault();
+  submitLearnAnswer(controller.learnChoices[pick - 1]);
 });
 
 // --- Quiz: start / submit ---
@@ -536,6 +921,7 @@ document.getElementById('loadInput').addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = evt => {
     try {
+      cancelLearnAdvance();
       controller.loadData(evt.target.result);
       setActiveView('editor');
     } catch (err) {

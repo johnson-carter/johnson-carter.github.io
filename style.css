@@ -358,18 +358,20 @@ body {
   border-color: var(--star);
 }
 
-#quizArea p {
+#quizArea p, #learnArea p {
   font-size: 1.4rem;
   text-align: center;
   width: 100%;
+  margin: 0;
 }
 
-#quizArea {
+#quizArea, #learnArea {
   min-height: 140px;
   background: var(--panel);
   border: 2px solid var(--border);
   border-radius: 16px;
   padding: 32px;
+  align-items: center;
 }
 
 .feedback {
@@ -448,4 +450,133 @@ body {
 .quiz-result-correct-answer {
   color: var(--danger);
   margin-top: 2px;
+}
+
+/* ---------------- Study sub-mode switch ---------------- */
+
+.mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: calc(var(--radius) - 3px);
+}
+
+.mode-btn:hover {
+  color: var(--text);
+}
+
+.mode-btn.active {
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+}
+
+/* ---------------- Learn sub-mode ---------------- */
+
+.stage-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.stage-badge.stage-mcq {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.stage-badge.stage-fr {
+  color: var(--star);
+  border-color: var(--star);
+}
+
+.learn-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .learn-choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 1.1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--panel) 85%, var(--text) 15%);
+}
+
+.choice-btn:disabled {
+  cursor: default;
+}
+
+.choice-key {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 75%, var(--text) 25%);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.choice-btn.choice-correct {
+  border-color: var(--correct);
+  background: color-mix(in srgb, var(--panel) 80%, var(--correct) 20%);
+  opacity: 1;
+}
+
+.choice-btn.choice-wrong {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  opacity: 1;
+}
+
+.learn-continue {
+  display: flex;
+  justify-content: center;
+  min-height: 56px;
+  margin-top: 8px;
 }

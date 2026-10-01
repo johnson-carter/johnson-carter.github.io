@@ -61,6 +61,11 @@
     <section id="view-study" class="view">
       <h2>Study Mode</h2>
 
+      <div class="mode-switch" id="studyModeSwitch">
+        <button class="mode-btn active" data-mode="flashcards">Flashcards</button>
+        <button class="mode-btn" data-mode="learn">Learn</button>
+      </div>
+
       <div class="study-controls">
         <label class="filter-toggle">
           <input type="checkbox" id="filterStarredCheckbox">
@@ -69,17 +74,45 @@
         <span id="studyProgress" class="progress-label"></span>
       </div>
 
-      <div id="studyCardArea" class="card-area">
-        <div class="flashcard" id="flashcard">
-          <div class="flashcard-face" id="flashcardFace">No cards to study</div>
+      <!-- FLASHCARDS SUB-MODE -->
+      <div id="studyFlashcardsPane">
+        <div id="studyCardArea" class="card-area">
+          <div class="flashcard" id="flashcard">
+            <div class="flashcard-face" id="flashcardFace">No cards to study</div>
+          </div>
+        </div>
+
+        <div class="study-actions">
+          <button class="btn" id="prevBtn">&larr; Prev</button>
+          <button class="btn" id="flipBtn">Flip</button>
+          <button class="btn" id="starBtn">&#9734; Star</button>
+          <button class="btn" id="nextBtn">Next &rarr;</button>
         </div>
       </div>
 
-      <div class="study-actions">
-        <button class="btn" id="prevBtn">&larr; Prev</button>
-        <button class="btn" id="flipBtn">Flip</button>
-        <button class="btn" id="starBtn">&#9734; Star</button>
-        <button class="btn" id="nextBtn">Next &rarr;</button>
+      <!-- LEARN SUB-MODE: multiple choice, then written -->
+      <div id="studyLearnPane" style="display:none;">
+        <div class="quiz-controls">
+          <button class="btn btn-primary" id="startLearnBtn">Start / Restart Learn</button>
+          <span id="learnStageBadge" class="stage-badge"></span>
+        </div>
+
+        <div id="learnArea" class="card-area">
+          <p id="learnQuestion">Press "Start / Restart Learn" to begin.</p>
+        </div>
+
+        <div id="learnChoices" class="learn-choices"></div>
+
+        <form id="learnForm" class="inline-form" style="display:none;">
+          <input type="text" id="learnAnswerInput" placeholder="Type the answer" autocomplete="off">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        <div id="learnFeedback" class="feedback"></div>
+
+        <div class="learn-continue">
+          <button class="btn btn-primary" id="learnContinueBtn" style="display:none;">Continue</button>
+        </div>
       </div>
     </section>
 
